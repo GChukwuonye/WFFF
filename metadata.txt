@@ -1,2 +1,4 @@
 This is a document that contains the metadata for for rhe Wild fire and flashflooding project led by Dr 
-Monica Ramirez-Andreotta. This is an ongoing prooject
+Monica Ramirez-Andreotta. This is an ongoing project. 
+
+This repository was created on the 28th November 2022
