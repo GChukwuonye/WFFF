@@ -10,7 +10,7 @@ library(EnvStats)
 
 #####----
 #set working directory 
-setwd("/Users/godsgiftnkechichukwuonye/Library/CloudStorage/Box-Box/R21 Wildfire and Flash Floods - shared all/Results/Turner Lab Results/Combined datasets with MRA lab ID")
+setwd("/Users/Gift/Library/CloudStorage/Box-Box/R21 Wildfire and Flash Floods - shared all/Results/Turner Lab Results/Combined datasets with MRA lab ID")
 
 #Soil PAH=====
 pah <- read_xlsx("Combined_PAH_Data.xlsx", sheet= "totalsoil", col_names = TRUE) 
@@ -90,20 +90,23 @@ scale_y_continuous()
 kruskal.test(pah2$`EPA16 (mg/kg)`, pah2$Location)
 kruskal.test(pah2$`EPA16 (mg/kg)`, pah2$Depth)
 
+#community soily=====
 community <- read_xlsx("Combined_PAH_Data.xlsx", sheet= "community", col_names = TRUE)
+community<- community[community$MATRIX != "WIPE", ]  
 head(community)
 community$RESULT<- as.numeric(community$RESULT)
 community$detect = ifelse(community$RESULT>0,"Detect","Non-Detect")
 community$detect<- replace_na(community$detect, "Non-Detect")
 community$RESULT<- replace_na(community$RESULT, 0)
 #community<- community[community$ANALYTE != "1-Methylnaphthalene", ] 
-#pah<- pah[pah$ANALYTE != "2-Chloronaphthalene", ] 
+
 table1(~ detect|ANALYTE+MATRIX, 
        data=community,
        overall=F)
 table1(~ detect|ANALYTE, 
        data=community,
        overall=F)
+community<- community[community$ANALYTE != "2-Chloronaphthalene", ] 
 community$corrected<- replace_na(community$RESULT)
 community$corrected <- ifelse(community$corrected <=(0.00000),
                         formatC(signif(((as.numeric(community$DL)/2)),digits=2), digits=2,format="fg", flag="#"),
@@ -123,9 +126,60 @@ table1(~corrected|ANALYTE,
                            .="GMEAN (GSD)"))
 
 community_short <-community[c(7:9, 17, 35)]
-community_short$corrected<- as.numeric(community_short$corrected)
-length(community_short)
+
+community_wide<- datawizard::data_to_wide(
+  community_short,
+  id_cols = NULL,
+  values_from = "corrected",
+  names_from = "ANALYTE",
+  values_drop_na = TRUE)
+
+write_csv(community_wide, "communitysoil.csv")
+
+#dust=====
+dust <- read_xlsx("Combined_PAH_Data.xlsx", sheet= "community", col_names = TRUE)
+dust <- dust[dust$MATRIX != "SS", ]  
+head(dust)
+dust$detect = ifelse(dust$RESULT>0,"Detect","Non-Detect")
+dust$detect<- replace_na(dust$detect, "Non-Detect")
+dust$RESULT<- as.numeric(dust$RESULT)
+dust$RESULT<- replace_na(dust$RESULT, 0)
+#community<- community[community$ANALYTE != "1-Methylnaphthalene", ] 
+
+table1(~ detect|ANALYTE, 
+       data=dust,
+       overall=F)
+
+dust<- dust[dust$ANALYTE != "2-Chloronaphthalene", ] 
+dust<- dust[dust$ANALYTE != "Acenaphthylene", ] 
+dust<- dust[dust$ANALYTE != "Anthracene", ] 
+dust<- dust[dust$ANALYTE != "Benzo(a)pyrene", ] 
+dust<- dust[dust$ANALYTE != "Benzo(k)fluoranthene", ] 
+dust<- dust[dust$ANALYTE != "Dibenz(a,h)anthracene", ] 
+dust<- dust[dust$MATRIX != "SS", ] 
+dust$corrected<- replace_na(dust$RESULT)
+dust$corrected <- ifelse(dust$corrected <=(0.00000),
+                              formatC(signif(((as.numeric(dust$DL)/2)),digits=2), digits=2,format="fg", flag="#"),
+                              formatC(signif((dust$corrected),digits=4), digits=4,format="fg", flag="#"))
 
 
+dust$corrected<- as.numeric(dust$corrected)
+dust$sqft<- as.numeric (dust$corrected/0.96875)
+
+table1(~sqft|ANALYTE, 
+       data=dust,
+       render.continuous=c(.="Mean (sd)", .="Median [Min, Max]",
+                           .="GMEAN (GSD)"))
+
+
+dust_short <-dust[c(7:9, 17, 36)]
+
+dust_wide<- pivot_wider(
+  dust_short,
+  id_cols = NULL,
+  values_from = "sqft",
+  names_from = "ANALYTE")
+
+write_csv(dust_wide, "communitydustpah.csv")
 
 
