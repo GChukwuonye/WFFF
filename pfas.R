@@ -5,10 +5,6 @@ library(stringr)
 library(reshape2)
 library(table1)
 
-
-
-
-
 #####----
 #set working directory 
 setwd("/Users/godsgiftnkechichukwuonye/Library/CloudStorage/Box-Box/R21 Wildfire and Flash Floods - shared all/Results/Turner Lab Results/Combined datasets with MRA lab ID")
@@ -17,28 +13,45 @@ setwd("/Users/godsgiftnkechichukwuonye/Library/CloudStorage/Box-Box/R21 Wildfire
 pfas <- read_xlsx("Combined_PFAS_Data.xlsx", sheet= "copy-residential", col_names = TRUE) 
 head(pfas)
 pfas$Result<- as.numeric(pfas$Result)
-
+pfas<- pfas[pfas$Parameter != "11Cl-PF3OUdS", ] 
+pfas<- pfas[pfas$Parameter != "4:2 Fluorotelomer sulfonate (4:2 FTS)", ] 
+pfas<- pfas[pfas$Parameter != "6:2 Fluorotelomer sulfonate (6:2 FTS)", ] 
+pfas<- pfas[pfas$Parameter != "9Cl-PF3ONS", ] 
+pfas<- pfas[pfas$Parameter != "ADONA", ] 
+pfas<- pfas[pfas$Parameter != "HFPO-DA", ] 
 
 pfas$detect = ifelse(pfas$Result>0,"Detect","Non-Detect")
 pfas$detect<- replace_na(pfas$detect, "Non-Detect")
 head(pfas)
-pfas_main<- pfas[pfas$Unit != "ng/L", ] 
-pfas_main$Result<- replace(pfas_main$Result, is.na(pfas_main$Result), 0)  
+pfas<- pfas[pfas$Unit != "ng/L", ] 
+pfas$Result<- replace(pfas$Result, is.na(pfas$Result), 0)  
 
 
-pfas_wide<- table1(~Laboratory_Qualifiers|Parameter, 
-       data=pfas_main,
+table1(~Laboratory_Qualifiers|Parameter, 
+       data=pfas,
        overall=F)
+pfas$Result<- replace_na(pfas$Result, 0)
+pfas$corrected<- replace_na(pfas$Result)
 
-pfas_short <- pfas_main[c(3, 5:6)]
+pfas$corrected <- ifelse(pfas$Result <=(0.00000),
+                        formatC(signif(((as.numeric(pfas$Detection_Limit)/2)),digits=2), digits=2,format="fg", flag="#"),
+                        formatC(signif((pfas$corrected),digits=4), digits=4,format="fg", flag="#"))
 
-pfas_wide<- datawizard::data_to_wide(
+pfas$corrected<- as.numeric(pfas$corrected)
+
+
+pfas_short <- pfas[c(3, 5, 41)]
+
+
+pfas_wide<- pivot_wider(
   pfas_short,
-  id_cols = NULL,
-  values_from = "Result",
-  names_from = "Parameter",
-  values_drop_na = TRUE,
-  check.rows= FALSE)
+  values_from = "corrected",
+  names_from = "Parameter")
+
+
+
+
+
 
 
 pfas_short <- pfas_main[c(3, 5:6)]
