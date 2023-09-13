@@ -90,9 +90,10 @@ scale_y_continuous()
 kruskal.test(pah2$`EPA16 (mg/kg)`, pah2$Location)
 kruskal.test(pah2$`EPA16 (mg/kg)`, pah2$Depth)
 
-#community soily=====
+#community soil=====
 community <- read_xlsx("Combined_PAH_Data.xlsx", sheet= "community", col_names = TRUE)
 community<- community[community$MATRIX != "WIPE", ]  
+community<- community[community$UNITS != "% Rec.", ]  
 head(community)
 community$RESULT<- as.numeric(community$RESULT)
 community$detect = ifelse(community$RESULT>0,"Detect","Non-Detect")
@@ -138,7 +139,8 @@ write_csv(community_wide, "communitysoil.csv")
 
 #dust=====
 dust <- read_xlsx("Combined_PAH_Data.xlsx", sheet= "community", col_names = TRUE)
-dust <- dust[dust$MATRIX != "SS", ]  
+dust <- dust[dust$MATRIX != "SS", ] 
+dust <- dust[dust$UNITS != "% Rec.", ]  
 head(dust)
 dust$detect = ifelse(dust$RESULT>0,"Detect","Non-Detect")
 dust$detect<- replace_na(dust$detect, "Non-Detect")

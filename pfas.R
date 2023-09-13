@@ -7,41 +7,48 @@ library(table1)
 
 #####----
 #set working directory 
-setwd("/Users/godsgiftnkechichukwuonye/Library/CloudStorage/Box-Box/R21 Wildfire and Flash Floods - shared all/Results/Turner Lab Results/Combined datasets with MRA lab ID")
+setwd("/Users/Gift/Library/CloudStorage/Box-Box/R21 Wildfire and Flash Floods - shared all/Results/Turner Lab Results/Combined datasets with MRA lab ID")
 
 #Detection_dust_PAFAS=====
 pfas <- read_xlsx("Combined_PFAS_Data.xlsx", sheet= "copy-residential", col_names = TRUE) 
 head(pfas)
 pfas$Result<- as.numeric(pfas$Result)
-pfas<- pfas[pfas$Parameter != "11Cl-PF3OUdS", ] 
-pfas<- pfas[pfas$Parameter != "4:2 Fluorotelomer sulfonate (4:2 FTS)", ] 
+#pfas <- pfas[-812,]
+
+#pfas<- pfas[pfas$Parameter != "11Cl-PF3OUdS", ] 
+#pfas<- pfas[pfas$Parameter != "4:2 Fluorotelomer sulfonate (4:2 FTS)", ] 
 pfas<- pfas[pfas$Parameter != "6:2 Fluorotelomer sulfonate (6:2 FTS)", ] 
+pfas<- pfas[pfas$Parameter != "6:2 FTS", ] 
+#pfas<- pfas[pfas$Parameter != "4:2 FTS", ] 
 pfas<- pfas[pfas$Parameter != "9Cl-PF3ONS", ] 
 pfas<- pfas[pfas$Parameter != "ADONA", ] 
-pfas<- pfas[pfas$Parameter != "HFPO-DA", ] 
+#pfas<- pfas[pfas$Parameter != "HFPO-DA", ] 
 
 pfas$detect = ifelse(pfas$Result>0,"Detect","Non-Detect")
 pfas$detect<- replace_na(pfas$detect, "Non-Detect")
 head(pfas)
 pfas<- pfas[pfas$Unit != "ng/L", ] 
 pfas$Result<- replace(pfas$Result, is.na(pfas$Result), 0)  
-
+pfas$Result<- replace_na(pfas$Result, 0)
+pfas$Result<- as.numeric(pfas$Result)
 
 table1(~Laboratory_Qualifiers|Parameter, 
        data=pfas,
        overall=F)
-pfas$Result<- replace_na(pfas$Result, 0)
+
+#pfas<- na.omit(pfas)
 pfas$corrected<- replace_na(pfas$Result)
 
 pfas$corrected <- ifelse(pfas$Result <=(0.00000),
                         formatC(signif(((as.numeric(pfas$Detection_Limit)/2)),digits=2), digits=2,format="fg", flag="#"),
                         formatC(signif((pfas$corrected),digits=4), digits=4,format="fg", flag="#"))
 
-pfas$corrected<- as.numeric(pfas$corrected)
 
 
-pfas_short <- pfas[c(3, 5, 41)]
 
+pfas_short <- pfas[c(3, 5, 22)]
+
+#is.na(pfas_short)
 
 pfas_wide<- pivot_wider(
   pfas_short,
@@ -49,11 +56,67 @@ pfas_wide<- pivot_wider(
   names_from = "Parameter")
 
 
+write_csv(pfas_wide, "pfas_final_copy.csv")
+
+
+#control=====
+
+#pfas_control=====
+control <- read_xlsx("Combined_PFAS_Data.xlsx", sheet= "copy-Control", col_names = TRUE) 
+head(control)
+control$Result<- as.numeric(control$Result)
+
+
+control$detect = ifelse(control$Result>0,"Detect","Non-Detect")
+control$detect<- replace_na(control$detect, "Non-Detect")
+head(control)
+control<- control[control$Unit != "ng/L", ] 
+table1(~ detect|Parameter, 
+       data=control,
+       overall=F)
+
+
+control<- control[control$Parameter != "11Cl-PF3OUdS", ] 
+control<- control[control$Parameter != "4:2 Fluorotelomer sulfonate (4:2 FTS)", ] 
+control<- control[control$Parameter != "6:2 Fluorotelomer sulfonate (6:2 FTS)", ] 
+control<- control[control$Parameter != "8:2 Fluorotelomer sulfonate (8:2 FTS)", ] 
+control<- control[control$Parameter != "9Cl-PF3ONS", ] 
+control<- control[control$Parameter != "ADONA", ] 
+control<- control[control$Parameter != "HFPO-DA", ] 
+control<- control[control$Parameter != "N-ethylperfluorooctanesulfonamidoacetic acid (NEtFOSAA)", ] 
+control<- control[control$Parameter != "N-methylperfluorooctanesulfonamidoacetic acid (NMeFOSAA)", ] 
+control<- control[control$Parameter != "Perfluoro-1-heptanesulfonate (PFHpS)", ] 
+control<- control[control$Parameter != "Perfluorodecane Sulfonate (PFDS)", ] 
+control<- control[control$Parameter != "Perfluoropentanoic acid (PFPeA)", ] 
+control<- control[control$Parameter != "Perfluorotetradecanoic acid (PFTeDA)", ] 
+control<- control[control$Parameter != "Perfluorotridecanoic acid (PFTrDA)", ] 
+control<- control[control$Parameter != "PFNS", ] 
+
+
+control$Result<- replace(control$Result, is.na(control$Result), 0)  
+control$corrected<- replace_na(control$Result)
+
+control$corrected <- ifelse(control$Result <=(0.00000),
+                         formatC(signif(((as.numeric(control$Detection_Limit)/2)),digits=2), digits=2,format="fg", flag="#"),
+                         formatC(signif((control$corrected),digits=4), digits=4,format="fg", flag="#"))
+
+
+control_short <- control[c(3, 5, 23)]
+
+control_wide<- datawizard::data_to_wide(
+  control_short,
+  id_cols = NULL,
+  values_from = "corrected",
+  names_from = "Parameter",
+  values_drop_na = TRUE)
+
+write_csv(control_wide, "pfas_control_cleaned.csv")
 
 
 
 
 
+#short chain======
 pfas_short <- pfas_main[c(3, 5:6)]
 
 pfas_short$Result<- replace(pfas_short$Result, is.na(pfas_short$Result), 0)  
